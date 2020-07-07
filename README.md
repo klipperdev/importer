@@ -1,7 +1,7 @@
 Klipper Importer Component
 ==========================
 
-The Importer component is a base to build importation connectors.
+The Importer component is a base to build importation pipelines.
 
 Resources
 ---------

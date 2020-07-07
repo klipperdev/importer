@@ -13,6 +13,7 @@
     "prefer-stable": true,
     "require": {
         "klipper/data-loader": "^2.0.0",
+        "symfony/event-dispatcher": "^5.1.0",
         "symfony/lock": "^5.1.0"
     },
     "require-dev": {
