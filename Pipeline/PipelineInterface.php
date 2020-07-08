@@ -25,11 +25,6 @@ interface PipelineInterface
     public function getName(): string;
 
     /**
-     * Get the size of the batch.
-     */
-    public function getBatchSize(): int;
-
-    /**
      * Extract the data from the source.
      *
      * @return array[] The list of source data

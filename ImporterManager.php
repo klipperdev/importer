@@ -16,6 +16,7 @@ use Klipper\Component\Importer\Event\PartialImportEvent;
 use Klipper\Component\Importer\Event\PostImportEvent;
 use Klipper\Component\Importer\Event\PreImportEvent;
 use Klipper\Component\Importer\Exception\InvalidArgumentException;
+use Klipper\Component\Importer\Pipeline\BatchablePipelineInterface;
 use Klipper\Component\Importer\Pipeline\CleanableLoadedDataPipelineInterface;
 use Klipper\Component\Importer\Pipeline\IncrementablePipelineInterface;
 use Klipper\Component\Importer\Pipeline\LoggablePipelineInterface;
@@ -121,14 +122,14 @@ class ImporterManager implements ImporterManagerInterface
                 $context->setOrganizationName($pipeline->getOrganizationName());
             }
 
-            $this->dispatcher->dispatch(new PreImportEvent($pipelineName, $context));
-            $startAt = $context->getStartAt();
-
             $lock = $this->lockFactory->createLock('importer:'.$pipeline->getName());
 
             if (!$lock->acquire()) {
                 return new ImportResult(null);
             }
+
+            $this->dispatcher->dispatch(new PreImportEvent($pipelineName, $context));
+            $startAt = $context->getStartAt();
 
             if (null !== $startAt && !$pipeline instanceof IncrementablePipelineInterface) {
                 throw new InvalidArgumentException(sprintf(
@@ -211,12 +212,13 @@ class ImporterManager implements ImporterManagerInterface
         $cursor = 0;
         $errors = 0;
         $finish = false;
+        $batchable = $pipeline instanceof BatchablePipelineInterface && $pipeline->getBatchSize() > 0;
 
         while (!$finish) {
             $result = $pipeline->extract($cursor, $startAt);
             $finish = empty($result);
 
-            if (!$finish) {
+            if (!$finish || !$batchable) {
                 $result = $pipeline->transform($result);
                 $resList = $pipeline->load($this->domainManager, $result);
                 $errors += \count($resList->getErrors());
@@ -227,6 +229,7 @@ class ImporterManager implements ImporterManagerInterface
                     $resList
                 ));
 
+                $finish = !$batchable;
                 ++$cursor;
             }
         }

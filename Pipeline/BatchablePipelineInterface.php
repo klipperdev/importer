@@ -11,22 +11,15 @@
 
 namespace Klipper\Component\Importer\Pipeline;
 
-use Psr\Log\LoggerInterface;
-
 /**
+ * Check if the pipeline support the batch.
+ *
  * @author François Pluchino <francois.pluchino@klipper.dev>
  */
-abstract class AbstractPipeline implements PipelineInterface, LoggablePipelineInterface
+interface BatchablePipelineInterface extends PipelineInterface
 {
-    protected ?LoggerInterface $logger;
-
-    public function __construct(?LoggerInterface $logger = null)
-    {
-        $this->logger = $logger;
-    }
-
-    public function getLogger(): ?LoggerInterface
-    {
-        return $this->logger;
-    }
+    /**
+     * Get the size of the batch.
+     */
+    public function getBatchSize(): int;
 }
