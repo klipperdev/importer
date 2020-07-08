@@ -96,20 +96,24 @@ class ImporterManager implements ImporterManagerInterface
         return $this->pipelines;
     }
 
-    public function import(string $pipelineName, ContextInterface $context): ImportResultInterface
+    public function import($pipeline, ContextInterface $context): ImportResultInterface
     {
         set_time_limit(0);
         $startedTime = microtime(true);
-        $lock = null;
-
-        $event = new PreImportEvent($pipelineName, $context);
-        $this->dispatcher->dispatch($event);
-        $pipelineName = $event->getPipelineName();
-        $startAt = $event->getContext()->getStartAt();
         $errors = 0;
+        $lock = null;
+        $pipelineName = $pipeline instanceof PipelineInterface
+            ? $pipeline->getName()
+            : (string) $pipeline;
 
         try {
-            $pipeline = $this->getPipeline($pipelineName);
+            if (!$pipeline instanceof PipelineInterface) {
+                $pipeline = $this->getPipeline($pipelineName);
+            }
+
+            $this->dispatcher->dispatch(new PreImportEvent($pipelineName, $context));
+            $startAt = $context->getStartAt();
+
             $lock = $this->lockFactory->createLock('importer:'.$pipeline->getName());
 
             if (!$lock->acquire()) {

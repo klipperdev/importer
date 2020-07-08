@@ -37,7 +37,9 @@ interface ImporterManagerInterface
     public function getPipelines(): array;
 
     /**
+     * @param PipelineInterface|string $pipeline The pipeline instance or name
+     *
      * @throws InvalidArgumentException When the pipeline does not exist
      */
-    public function import(string $pipelineName, ContextInterface $context): ImportResultInterface;
+    public function import($pipeline, ContextInterface $context): ImportResultInterface;
 }
