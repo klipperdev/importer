@@ -96,7 +96,7 @@ class ImporterManager implements ImporterManagerInterface
         return $this->pipelines;
     }
 
-    public function import(string $pipelineName, ContextInterface $context): ?int
+    public function import(string $pipelineName, ContextInterface $context): ImportResultInterface
     {
         set_time_limit(0);
         $startedTime = microtime(true);
@@ -113,7 +113,7 @@ class ImporterManager implements ImporterManagerInterface
             $lock = $this->lockFactory->createLock('importer:'.$pipeline->getName());
 
             if (!$lock->acquire()) {
-                return null;
+                return new ImportResult(null);
             }
 
             if (null !== $startAt && !$pipeline instanceof IncrementablePipelineInterface) {
@@ -176,7 +176,7 @@ class ImporterManager implements ImporterManagerInterface
             $lock->release();
         }
 
-        return $errors;
+        return new ImportResult($errors);
     }
 
     private function getLogger(?PipelineInterface $pipeline = null): LoggerInterface

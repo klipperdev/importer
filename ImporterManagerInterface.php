@@ -38,8 +38,6 @@ interface ImporterManagerInterface
 
     /**
      * @throws InvalidArgumentException When the pipeline does not exist
-     *
-     * @return null|bool Null value if the import is already being processed, 0 if success, otherwise, the count of errors
      */
-    public function import(string $pipelineName, ContextInterface $context): ?int;
+    public function import(string $pipelineName, ContextInterface $context): ImportResultInterface;
 }

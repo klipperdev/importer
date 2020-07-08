@@ -65,14 +65,14 @@ class ImporterRunCommand extends Command
             return 1;
         }
 
-        $errors = $this->importerManager->import($pipeline, new Context($username, $organization, $startAt));
+        $res = $this->importerManager->import($pipeline, new Context($username, $organization, $startAt));
 
-        if (null === $errors) {
+        if ($res->isSkipped()) {
             $style->note(sprintf(
                 'Import data from the "%s" pipeline is already being processed',
                 $pipeline
             ));
-        } elseif (0 === $errors) {
+        } elseif ($res->isSuccess()) {
             $style->success(sprintf(
                 'Import data from the "%s" pipeline is finished with successfully',
                 $pipeline
@@ -81,10 +81,10 @@ class ImporterRunCommand extends Command
             $style->error(sprintf(
                 'Import data from the "%s" pipeline is finished with %s error(s)',
                 $pipeline,
-                $errors
+                $res->getCountErrors()
             ));
         }
 
-        return $errors ? 0 : 1;
+        return $res->isSuccess() ? 0 : 1;
     }
 }
