@@ -101,6 +101,7 @@ class ImporterManager implements ImporterManagerInterface
         $lock = null;
 
         $event = new PreImportEvent($pipelineName, $context);
+        $this->dispatcher->dispatch($event);
         $pipelineName = $event->getPipelineName();
         $startAt = $event->getContext()->getStartAt();
         $errors = 0;
