@@ -18,6 +18,7 @@ use Klipper\Component\Importer\Event\PreImportEvent;
 use Klipper\Component\Importer\Exception\InvalidArgumentException;
 use Klipper\Component\Importer\Pipeline\CleanableLoadedDataPipelineInterface;
 use Klipper\Component\Importer\Pipeline\IncrementablePipelineInterface;
+use Klipper\Component\Importer\Pipeline\LoggablePipelineInterface;
 use Klipper\Component\Importer\Pipeline\PipelineInterface;
 use Klipper\Component\Resource\Domain\DomainManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -180,7 +181,7 @@ class ImporterManager implements ImporterManagerInterface
 
     private function getLogger(?PipelineInterface $pipeline = null): LoggerInterface
     {
-        if (null !== $pipeline && $logger = $pipeline->getLogger()) {
+        if ($pipeline instanceof LoggablePipelineInterface && $logger = $pipeline->getLogger()) {
             return $logger;
         }
 

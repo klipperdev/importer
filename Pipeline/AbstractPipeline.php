@@ -16,7 +16,7 @@ use Psr\Log\LoggerInterface;
 /**
  * @author François Pluchino <francois.pluchino@klipper.dev>
  */
-abstract class AbstractPipeline implements PipelineInterface
+abstract class AbstractPipeline implements PipelineInterface, LoggablePipelineInterface
 {
     protected int $batchSize;
 

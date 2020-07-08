@@ -13,7 +13,6 @@ namespace Klipper\Component\Importer\Pipeline;
 
 use Klipper\Component\Resource\Domain\DomainManagerInterface;
 use Klipper\Component\Resource\ResourceListInterface;
-use Psr\Log\LoggerInterface;
 
 /**
  * @author François Pluchino <francois.pluchino@klipper.dev>
@@ -29,11 +28,6 @@ interface PipelineInterface
      * Get the size of the batch.
      */
     public function getBatchSize(): int;
-
-    /**
-     * Get the dedicated logger for the pipeline.
-     */
-    public function getLogger(): ?LoggerInterface;
 
     /**
      * Extract the data from the source.
