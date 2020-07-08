@@ -20,6 +20,7 @@ use Klipper\Component\Importer\Pipeline\CleanableLoadedDataPipelineInterface;
 use Klipper\Component\Importer\Pipeline\IncrementablePipelineInterface;
 use Klipper\Component\Importer\Pipeline\LoggablePipelineInterface;
 use Klipper\Component\Importer\Pipeline\PipelineInterface;
+use Klipper\Component\Importer\Pipeline\RequiredUserPipelineInterface;
 use Klipper\Component\Resource\Domain\DomainManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
@@ -109,6 +110,10 @@ class ImporterManager implements ImporterManagerInterface
         try {
             if (!$pipeline instanceof PipelineInterface) {
                 $pipeline = $this->getPipeline($pipelineName);
+            }
+
+            if ($pipeline instanceof RequiredUserPipelineInterface) {
+                $context->setUsername($pipeline->getUsername());
             }
 
             $this->dispatcher->dispatch(new PreImportEvent($pipelineName, $context));
