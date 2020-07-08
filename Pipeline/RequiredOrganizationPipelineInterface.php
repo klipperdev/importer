@@ -18,5 +18,5 @@ namespace Klipper\Component\Importer\Pipeline;
  */
 interface RequiredOrganizationPipelineInterface extends PipelineInterface
 {
-    public function getOrganizationName(): string;
+    public function getOrganizationName(): ?string;
 }
