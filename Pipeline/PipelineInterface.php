@@ -26,11 +26,6 @@ interface PipelineInterface
     public function getName(): string;
 
     /**
-     * Check if the pipeline support the incremental import.
-     */
-    public function supportIncremental(): bool;
-
-    /**
      * Get the size of the batch.
      */
     public function getBatchSize(): int;

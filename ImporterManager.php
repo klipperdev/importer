@@ -17,6 +17,7 @@ use Klipper\Component\Importer\Event\PostImportEvent;
 use Klipper\Component\Importer\Event\PreImportEvent;
 use Klipper\Component\Importer\Exception\InvalidArgumentException;
 use Klipper\Component\Importer\Pipeline\CleanableLoadedDataPipelineInterface;
+use Klipper\Component\Importer\Pipeline\IncrementablePipelineInterface;
 use Klipper\Component\Importer\Pipeline\PipelineInterface;
 use Klipper\Component\Resource\Domain\DomainManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -114,7 +115,7 @@ class ImporterManager implements ImporterManagerInterface
                 return null;
             }
 
-            if (null !== $startAt && !$pipeline->supportIncremental()) {
+            if (null !== $startAt && !$pipeline instanceof IncrementablePipelineInterface) {
                 throw new InvalidArgumentException(sprintf(
                     'The "%s" pipeline does not support the incremental import',
                     $pipelineName
