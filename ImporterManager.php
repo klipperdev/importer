@@ -288,15 +288,19 @@ class ImporterManager implements ImporterManagerInterface
         /** @var ConstraintViolation $error */
         foreach ($resList->getErrors() as $i => $error) {
             $pp = $error->getPropertyPath();
-            $resErrors['global.errors['.$i.']'.($pp ? '.'.$pp : '')] = $error->getMessage();
+            $resErrors['errors'][$i] = $error->getMessage().($pp ? ' ('.$pp.')' : '');
         }
 
         foreach ($resList->getResources() as $j => $resource) {
             if (!$resource->isValid()) {
+                $resErrors['resources'][$j]['batch_position'] = $j;
                 /** @var ConstraintViolation $error */
                 foreach ($resource->getErrors() as $i => $error) {
-                    $pp = $error->getPropertyPath();
-                    $resErrors['resources['.$j.'].errors['.$i.']'.($pp ? '.'.$pp : '')] = $error->getMessage();
+                    if (null !== $pp = $error->getPropertyPath()) {
+                        $resErrors['resources'][$j]['fields'][$pp]['errors'][$i] = $error->getMessage();
+                    } else {
+                        $resErrors['resources'][$j]['errors'][$i] = $error->getMessage();
+                    }
                 }
             }
         }
