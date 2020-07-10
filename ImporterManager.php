@@ -29,6 +29,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Validator\ConstraintViolation;
 
 /**
  * @author François Pluchino <francois.pluchino@klipper.dev>
@@ -42,6 +43,8 @@ class ImporterManager implements ImporterManagerInterface
     private EventDispatcherInterface $dispatcher;
 
     private LoggerInterface $logger;
+
+    private bool $logResourceErrors = true;
 
     /**
      * @var PipelineInterface[]
@@ -66,6 +69,11 @@ class ImporterManager implements ImporterManagerInterface
         foreach ($pipelines as $pipeline) {
             $this->pipelines[$pipeline->getName()] = $pipeline;
         }
+    }
+
+    public function setLogResourceErrors(bool $logResourceErrors): void
+    {
+        $this->logResourceErrors = $logResourceErrors;
     }
 
     public function addPipeline(PipelineInterface $pipeline)
@@ -248,12 +256,52 @@ class ImporterManager implements ImporterManagerInterface
                     $resList
                 ));
 
+                if ($this->logResourceErrors && $resList->hasErrors()) {
+                    $this->getLogger($pipeline)->error(
+                        sprintf(
+                            'Import data from the "%s" pipeline has errors on batch cursor "%s"',
+                            $pipeline->getName(),
+                            $cursor
+                        ),
+                        [
+                            'importer_pipeline' => $pipeline->getName(),
+                            'id' => $id,
+                            'cursor' => $cursor,
+                            'errors' => $this->buildResourceErrors($resList),
+                            'source_data' => $result,
+                        ],
+                    );
+                }
+
                 $finish = !$batchable;
                 ++$cursor;
             }
         }
 
         return $errors;
+    }
+
+    private function buildResourceErrors(ResourceListInterface $resList): array
+    {
+        $resErrors = [];
+
+        /** @var ConstraintViolation $error */
+        foreach ($resList->getErrors() as $i => $error) {
+            $pp = $error->getPropertyPath();
+            $resErrors['global.errors['.$i.']'.($pp ? '.'.$pp : '')] = $error->getMessage();
+        }
+
+        foreach ($resList->getResources() as $j => $resource) {
+            if (!$resource->isValid()) {
+                /** @var ConstraintViolation $error */
+                foreach ($resource->getErrors() as $i => $error) {
+                    $pp = $error->getPropertyPath();
+                    $resErrors['resources['.$j.'].errors['.$i.']'.($pp ? '.'.$pp : '')] = $error->getMessage();
+                }
+            }
+        }
+
+        return $resErrors;
     }
 
     private function getCountErrors(ResourceListInterface $resourceList): int
