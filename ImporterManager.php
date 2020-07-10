@@ -221,7 +221,7 @@ class ImporterManager implements ImporterManagerInterface
             if (!$finish || !$batchable) {
                 $result = $pipeline->transform($result);
                 $resList = $pipeline->load($this->domainManager, $result);
-                $errors += \count($resList->getErrors());
+                $errors += $this->getCountErrors($resList);
 
                 $this->dispatcher->dispatch(new PartialImportEvent(
                     $pipeline->getName(),
@@ -232,6 +232,21 @@ class ImporterManager implements ImporterManagerInterface
                 $finish = !$batchable;
                 ++$cursor;
             }
+        }
+
+        return $errors;
+    }
+
+    private function getCountErrors(ResourceListInterface $resourceList): int
+    {
+        if (!$resourceList->hasErrors()) {
+            return 0;
+        }
+
+        $errors = \count($resourceList->getErrors());
+
+        foreach ($resourceList->all() as $resource) {
+            $errors += \count($resource->getErrors());
         }
 
         return $errors;
