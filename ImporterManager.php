@@ -24,6 +24,7 @@ use Klipper\Component\Importer\Pipeline\PipelineInterface;
 use Klipper\Component\Importer\Pipeline\RequiredOrganizationPipelineInterface;
 use Klipper\Component\Importer\Pipeline\RequiredUserPipelineInterface;
 use Klipper\Component\Resource\Domain\DomainManagerInterface;
+use Klipper\Component\Resource\ResourceListInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -108,6 +109,7 @@ class ImporterManager implements ImporterManagerInterface
         $pipelineName = $pipeline instanceof PipelineInterface
             ? $pipeline->getName()
             : (string) $pipeline;
+        $id = $pipelineName.':'.($startedTime * 10000);
 
         try {
             if (!$pipeline instanceof PipelineInterface) {
@@ -128,7 +130,7 @@ class ImporterManager implements ImporterManagerInterface
                 return new ImportResult(null);
             }
 
-            $this->dispatcher->dispatch(new PreImportEvent($pipelineName, $context));
+            $this->dispatcher->dispatch(new PreImportEvent($pipelineName, $id, $context));
             $startAt = $context->getStartAt();
 
             if (null !== $startAt && !$pipeline instanceof IncrementablePipelineInterface) {
@@ -138,7 +140,7 @@ class ImporterManager implements ImporterManagerInterface
                 ));
             }
 
-            $errors += $this->doImport($pipeline, $context);
+            $errors += $this->doImport($pipeline, $id, $context);
             $duration = round((microtime(true) - $startedTime) * 10) / 10;
 
             if (0 === $errors) {
@@ -151,10 +153,14 @@ class ImporterManager implements ImporterManagerInterface
                             'Cleaning data after import from the "%s" pipeline is finished with an error: '.$e->getMessage(),
                             $pipeline->getName(),
                         );
-                        $this->dispatcher->dispatch(new ErrorImportEvent($pipelineName, $context, $msg, $e));
+                        $this->dispatcher->dispatch(new ErrorImportEvent($pipelineName, $id, $context, $msg, $e));
                         $this->getLogger($pipeline)->error(
                             $msg,
-                            ['importer_pipeline' => $pipeline->getName(), 'exception' => $e],
+                            [
+                                'importer_pipeline' => $pipeline->getName(),
+                                'id' => $id,
+                                'exception' => $e,
+                            ],
                         );
                     }
                 }
@@ -164,7 +170,11 @@ class ImporterManager implements ImporterManagerInterface
                         'Import data from the "%s" pipeline is finished with successfully in %s s',
                         $pipeline->getName(),
                         $duration
-                    ), ['importer_pipeline' => $pipeline->getName(), 'duration' => $duration]);
+                    ), [
+                        'importer_pipeline' => $pipeline->getName(),
+                        'id' => $id,
+                        'duration' => $duration,
+                    ]);
                 }
             } else {
                 ++$errors;
@@ -173,19 +183,27 @@ class ImporterManager implements ImporterManagerInterface
                     $pipeline->getName(),
                     $duration
                 );
-                $this->dispatcher->dispatch(new ErrorImportEvent($pipelineName, $context, $msg));
+                $this->dispatcher->dispatch(new ErrorImportEvent($pipelineName, $id, $context, $msg));
                 $this->getLogger($pipeline)->error(
                     $msg,
-                    ['importer_pipeline' => $pipeline->getName(), 'duration' => $duration],
+                    [
+                        'importer_pipeline' => $pipeline->getName(),
+                        'id' => $id,
+                        'duration' => $duration,
+                    ],
                 );
             }
         } catch (\Throwable $e) {
             ++$errors;
-            $this->dispatcher->dispatch(new ErrorImportEvent($pipelineName, $context, $e->getMessage(), $e));
-            $this->getLogger()->critical($e->getMessage(), ['importer_pipeline' => $pipelineName, 'exception' => $e]);
+            $this->dispatcher->dispatch(new ErrorImportEvent($pipelineName, $id, $context, $e->getMessage(), $e));
+            $this->getLogger()->critical($e->getMessage(), [
+                'importer_pipeline' => $pipelineName,
+                'id' => $id,
+                'exception' => $e,
+            ]);
         }
 
-        $this->dispatcher->dispatch(new PostImportEvent($pipelineName, $context, $errors));
+        $this->dispatcher->dispatch(new PostImportEvent($pipelineName, $id, $context, $errors));
 
         if ($lock) {
             $lock->release();
@@ -206,7 +224,7 @@ class ImporterManager implements ImporterManagerInterface
     /**
      * @return int The count of error
      */
-    private function doImport(PipelineInterface $pipeline, ContextInterface $context): int
+    private function doImport(PipelineInterface $pipeline, string $id, ContextInterface $context): int
     {
         $startAt = $context->getStartAt();
         $cursor = 0;
@@ -225,6 +243,7 @@ class ImporterManager implements ImporterManagerInterface
 
                 $this->dispatcher->dispatch(new PartialImportEvent(
                     $pipeline->getName(),
+                    $id,
                     $context,
                     $resList
                 ));

@@ -21,17 +21,25 @@ abstract class AbstractImportEvent extends Event
 {
     protected string $pipelineName;
 
+    protected string $id;
+
     protected ContextInterface $context;
 
-    public function __construct(string $pipelineName, ContextInterface $context)
+    public function __construct(string $pipelineName, string $id, ContextInterface $context)
     {
         $this->pipelineName = $pipelineName;
+        $this->id = $id;
         $this->context = $context;
     }
 
     public function getPipelineName(): string
     {
         return $this->pipelineName;
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
     }
 
     public function getContext(): ContextInterface

@@ -22,10 +22,11 @@ class PostImportEvent extends AbstractImportEvent
 
     public function __construct(
         string $pipelineName,
+        string $id,
         ContextInterface $context,
         int $errors
     ) {
-        parent::__construct($pipelineName, $context);
+        parent::__construct($pipelineName, $id, $context);
 
         $this->errors = $errors;
     }

@@ -24,11 +24,12 @@ class ErrorImportEvent extends AbstractImportEvent
 
     public function __construct(
         string $pipelineName,
+        string $id,
         ContextInterface $context,
         string $message,
         ?\Throwable $exception = null
     ) {
-        parent::__construct($pipelineName, $context);
+        parent::__construct($pipelineName, $id, $context);
 
         $this->message = $message;
         $this->exception = $exception;

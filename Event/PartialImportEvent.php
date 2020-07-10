@@ -23,10 +23,11 @@ class PartialImportEvent extends AbstractImportEvent
 
     public function __construct(
         string $pipelineName,
+        string $id,
         ContextInterface $context,
         ResourceListInterface $resourceList
     ) {
-        parent::__construct($pipelineName, $context);
+        parent::__construct($pipelineName, $id, $context);
 
         $this->resourceList = $resourceList;
     }
