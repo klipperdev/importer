@@ -35,4 +35,6 @@ interface LastImportDateableInterface
     public function addLastImportDate(string $service, \DateTimeInterface $datetime): void;
 
     public function removeLastImportDate(string $service): void;
+
+    public function clearLastImportDates(): void;
 }

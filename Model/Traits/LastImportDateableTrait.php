@@ -38,8 +38,6 @@ trait LastImportDateableTrait
      */
     public function setLastImportDates(array $services): void
     {
-        $this->lastImportDates = [];
-
         foreach ($services as $service => $dateTime) {
             $this->addLastImportDate($service, $dateTime);
         }
@@ -104,5 +102,10 @@ trait LastImportDateableTrait
     public function removeLastImportDate(string $service): void
     {
         unset($this->lastImportDates[$service]);
+    }
+
+    public function clearLastImportDates(): void
+    {
+        $this->lastImportDates = [];
     }
 }
