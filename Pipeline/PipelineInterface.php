@@ -36,7 +36,7 @@ interface PipelineInterface
      *
      * @param array[] $sourceData The list of source data
      */
-    public function transform(array $sourceData): array;
+    public function transform(DomainManagerInterface $domainManager, array $sourceData): array;
 
     /**
      * Load the transformed data into the main database.

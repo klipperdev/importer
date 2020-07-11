@@ -245,7 +245,7 @@ class ImporterManager implements ImporterManagerInterface
             $finish = empty($result);
 
             if (!$finish || !$batchable) {
-                $result = $pipeline->transform($result);
+                $result = $pipeline->transform($this->domainManager, $result);
                 $resList = $pipeline->load($this->domainManager, $result);
                 $errors += $this->getCountErrors($resList);
 
