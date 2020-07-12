@@ -82,6 +82,8 @@ class ImporterSecuritySubscriber implements EventSubscriberInterface
         if (null !== $this->orgContext && null !== $this->orgContextHelper) {
             if (empty($organization)) {
                 $this->orgContext->setCurrentOrganization(false);
+            } elseif ('user' === $organization) {
+                $this->orgContext->setCurrentOrganization(null);
             } else {
                 $this->authOrganization($organization);
             }
