@@ -39,7 +39,11 @@ trait LastImportDateableTrait
     public function setLastImportDates(array $services): void
     {
         foreach ($services as $service => $dateTime) {
-            $this->addLastImportDate($service, $dateTime);
+            if (null === $dateTime) {
+                $this->removeLastImportDate($service);
+            } else {
+                $this->addLastImportDate($service, $dateTime);
+            }
         }
     }
 
