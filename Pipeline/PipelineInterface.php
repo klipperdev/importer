@@ -43,5 +43,5 @@ interface PipelineInterface
      *
      * @param array[] $transformedData The transformed data with field names formatted for the property path
      */
-    public function load(DomainManagerInterface $domainManager, array $transformedData): ResourceListInterface;
+    public function load(DomainManagerInterface $domainManager, array $transformedData, bool $autoCommit): ResourceListInterface;
 }

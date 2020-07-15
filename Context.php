@@ -22,14 +22,18 @@ class Context implements ContextInterface
 
     private ?\DateTimeInterface $startAt;
 
+    private bool $autoCommit = false;
+
     public function __construct(
         ?string $username,
         ?string $organizationName,
-        ?\DateTimeInterface $startAt
+        ?\DateTimeInterface $startAt,
+        bool $autoCommit = false
     ) {
         $this->username = $username;
         $this->organizationName = $organizationName;
         $this->startAt = $startAt;
+        $this->autoCommit = $autoCommit;
     }
 
     public function setUsername(?string $username): void
@@ -60,5 +64,17 @@ class Context implements ContextInterface
     public function getStartAt(): ?\DateTimeInterface
     {
         return $this->startAt;
+    }
+
+    public function isAutoCommit(): bool
+    {
+        return $this->autoCommit;
+    }
+
+    public function setAutoCommit(bool $autoCommit): self
+    {
+        $this->autoCommit = $autoCommit;
+
+        return $this;
     }
 }

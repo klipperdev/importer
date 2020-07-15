@@ -239,6 +239,7 @@ class ImporterManager implements ImporterManagerInterface
         $errors = 0;
         $finish = false;
         $batchable = $pipeline instanceof BatchablePipelineInterface && $pipeline->getBatchSize() > 0;
+        $autoCommit = $context->isAutoCommit();
 
         while (!$finish) {
             $result = $pipeline->extract($cursor, $startAt);
@@ -246,7 +247,7 @@ class ImporterManager implements ImporterManagerInterface
 
             if (!$finish || !$batchable) {
                 $result = $pipeline->transform($this->domainManager, $result);
-                $resList = $pipeline->load($this->domainManager, $result);
+                $resList = $pipeline->load($this->domainManager, $result, $autoCommit);
                 $errors += $this->getCountErrors($resList);
 
                 $this->dispatcher->dispatch(new PartialImportEvent(

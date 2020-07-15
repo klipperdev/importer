@@ -43,6 +43,7 @@ class ImporterRunCommand extends Command
             ->addOption('start-at', 'S', InputOption::VALUE_OPTIONAL, 'The ISO datetime')
             ->addOption('username', 'U', InputOption::VALUE_OPTIONAL, 'The username of User used to the import')
             ->addOption('organization', 'O', InputOption::VALUE_OPTIONAL, 'The name of Organization used to the import')
+            ->addOption('auto-commit', 'A', InputOption::VALUE_NONE, 'Check if transactional mode or auto commit must be used, dy default ')
         ;
     }
 
@@ -56,6 +57,7 @@ class ImporterRunCommand extends Command
         $startAt = $input->getOption('start-at');
         $username = $input->getOption('username');
         $organization = $input->getOption('organization');
+        $autoCommit = $input->getOption('auto-commit');
 
         try {
             $startAt = !empty($startAt) ? new \DateTime($startAt) : null;

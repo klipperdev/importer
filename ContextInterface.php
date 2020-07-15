@@ -27,4 +27,8 @@ interface ContextInterface
     public function setStartAt(?\DateTimeInterface $startAt): void;
 
     public function getStartAt(): ?\DateTimeInterface;
+
+    public function isAutoCommit(): bool;
+
+    public function setAutoCommit(bool $autoCommit);
 }
