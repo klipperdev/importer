@@ -67,7 +67,7 @@ class ImporterRunCommand extends Command
             return 1;
         }
 
-        $res = $this->importerManager->import($pipeline, new Context($username, $organization, $startAt));
+        $res = $this->importerManager->import($pipeline, new Context($username, $organization, $startAt, $autoCommit));
 
         if ($res->isSkipped()) {
             $style->note(sprintf(
