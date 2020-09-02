@@ -39,11 +39,11 @@ class ImporterRunCommand extends Command
         $this
             ->setName('importer:run')
             ->setDescription('Import data from a selected pipeline')
-            ->addArgument('pipeline', InputArgument::REQUIRED, 'The unique name of the pipeline')
+            ->addArgument('pipeline', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'The unique names of pipelines')
             ->addOption('start-at', 'S', InputOption::VALUE_OPTIONAL, 'The ISO datetime')
             ->addOption('username', 'U', InputOption::VALUE_OPTIONAL, 'The username of User used to the import')
             ->addOption('organization', 'O', InputOption::VALUE_OPTIONAL, 'The name of Organization used to the import')
-            ->addOption('auto-commit', 'A', InputOption::VALUE_NONE, 'Check if transactional mode or auto commit must be used, dy default ')
+            ->addOption('auto-commit', 'A', InputOption::VALUE_NONE, 'Check if transactional mode or auto commit must be used, dy default')
         ;
     }
 
@@ -53,7 +53,7 @@ class ImporterRunCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $style = new SymfonyStyle($input, $output);
-        $pipeline = $input->getArgument('pipeline');
+        $pipelines = $input->getArgument('pipeline');
         $startAt = $input->getOption('start-at');
         $username = $input->getOption('username');
         $organization = $input->getOption('organization');
@@ -67,26 +67,30 @@ class ImporterRunCommand extends Command
             return 1;
         }
 
-        $res = $this->importerManager->import($pipeline, new Context($username, $organization, $startAt, $autoCommit));
+        $results = $this->importerManager->imports($pipelines, new Context($username, $organization, $startAt, $autoCommit));
 
-        if ($res->isSkipped()) {
-            $style->note(sprintf(
-                'Import data from the "%s" pipeline is already being processed',
-                $pipeline
-            ));
-        } elseif ($res->isSuccess()) {
-            $style->success(sprintf(
-                'Import data from the "%s" pipeline is finished with successfully',
-                $pipeline
-            ));
-        } else {
-            $style->error(sprintf(
-                'Import data from the "%s" pipeline is finished with %s error(s)',
-                $pipeline,
-                $res->getCountErrors()
-            ));
+        foreach ($results->getResults() as $res) {
+            $pipeline = $res->getPipelineName();
+
+            if ($res->isSkipped()) {
+                $style->note(sprintf(
+                    'Import data from the "%s" pipeline is already being processed',
+                    $pipeline
+                ));
+            } elseif ($res->isSuccess()) {
+                $style->success(sprintf(
+                    'Import data from the "%s" pipeline is finished with successfully',
+                    $pipeline
+                ));
+            } else {
+                $style->error(sprintf(
+                    'Import data from the "%s" pipeline is finished with %s error(s)',
+                    $pipeline,
+                    $res->getCountErrors()
+                ));
+            }
         }
 
-        return $res->isSuccess() ? 0 : 1;
+        return $results->isSuccess() ? 0 : 1;
     }
 }

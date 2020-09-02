@@ -16,17 +16,25 @@ namespace Klipper\Component\Importer;
  */
 class ImportResult implements ImportResultInterface
 {
+    private string $pipelineName;
+
     private bool $skipped;
 
     private bool $success;
 
     private int $countErrors;
 
-    public function __construct(?int $countErrors)
+    public function __construct(string $pipelineName, ?int $countErrors)
     {
+        $this->pipelineName = $pipelineName;
         $this->skipped = null === $countErrors;
         $this->success = 0 === $countErrors;
         $this->countErrors = (int) $countErrors;
+    }
+
+    public function getPipelineName(): string
+    {
+        return $this->pipelineName;
     }
 
     public function isSkipped(): bool

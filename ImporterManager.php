@@ -135,7 +135,7 @@ class ImporterManager implements ImporterManagerInterface
             $lock = $this->lockFactory->createLock('importer:'.$pipeline->getName());
 
             if (!$lock->acquire()) {
-                return new ImportResult(null);
+                return new ImportResult($pipelineName, null);
             }
 
             $this->dispatcher->dispatch(new PreImportEvent($pipelineName, $id, $context));
@@ -217,7 +217,41 @@ class ImporterManager implements ImporterManagerInterface
             $lock->release();
         }
 
-        return new ImportResult($errors);
+        return new ImportResult($pipelineName, $errors);
+    }
+
+    public function imports(array $pipelines, ContextInterface $context): ImportResultListInterface
+    {
+        $validPipelines = [];
+        $results = [];
+
+        foreach ($pipelines as $pipeline) {
+            if (!$pipeline instanceof PipelineInterface) {
+                try {
+                    $validPipelines[] = $this->getPipeline($pipeline);
+                } catch (\Throwable $e) {
+                    $this->getLogger()->critical($e->getMessage(), [
+                        'importer_pipelines' => $pipelines,
+                        'importer_pipeline' => $pipeline,
+                        'exception' => $e,
+                    ]);
+                }
+            } else {
+                $validPipelines[] = $pipeline;
+            }
+        }
+
+        foreach ($validPipelines as $pipeline) {
+            $importContext = clone $context;
+
+            if (null !== $importContext->getStartAt() && !$pipeline instanceof IncrementablePipelineInterface) {
+                $importContext->setStartAt(null);
+            }
+
+            $results[] = $this->import($pipeline, $importContext);
+        }
+
+        return new ImportResultList($results);
     }
 
     private function getLogger(?PipelineInterface $pipeline = null): LoggerInterface

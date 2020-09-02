@@ -14,13 +14,16 @@ namespace Klipper\Component\Importer;
 /**
  * @author François Pluchino <francois.pluchino@klipper.dev>
  */
-interface ImportResultInterface
+interface ImportResultListInterface
 {
-    public function getPipelineName(): string;
-
     public function isSkipped(): bool;
 
     public function isSuccess(): bool;
 
     public function getCountErrors(): int;
+
+    /**
+     * @return ImportResultInterface[]
+     */
+    public function getResults(): array;
 }

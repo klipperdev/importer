@@ -42,4 +42,11 @@ interface ImporterManagerInterface
      * @throws InvalidArgumentException When the pipeline does not exist
      */
     public function import($pipeline, ContextInterface $context): ImportResultInterface;
+
+    /**
+     * @param PipelineInterface[]|string[] $pipelines The pipeline instances or names
+     *
+     * @throws InvalidArgumentException When the pipeline does not exist
+     */
+    public function imports(array $pipelines, ContextInterface $context): ImportResultListInterface;
 }
