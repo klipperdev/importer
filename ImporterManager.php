@@ -220,10 +220,11 @@ class ImporterManager implements ImporterManagerInterface
         return new ImportResult($pipelineName, $errors);
     }
 
-    public function imports(array $pipelines, ContextInterface $context): ImportResultListInterface
+    public function imports(array $pipelines, ContextInterface $context, bool $stopOnError = true): ImportResultListInterface
     {
         $validPipelines = [];
         $results = [];
+        $success = true;
 
         foreach ($pipelines as $pipeline) {
             if (!$pipeline instanceof PipelineInterface) {
@@ -248,7 +249,11 @@ class ImporterManager implements ImporterManagerInterface
                 $importContext->setStartAt(null);
             }
 
-            $results[] = $this->import($pipeline, $importContext);
+            $res = $stopOnError && !$success
+                ? new ImportResult($pipeline->getName(), null)
+                : $this->import($pipeline, $importContext);
+            $success = $success && $res->isSuccess();
+            $results[] = $res;
         }
 
         return new ImportResultList($results);

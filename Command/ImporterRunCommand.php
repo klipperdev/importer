@@ -44,6 +44,7 @@ class ImporterRunCommand extends Command
             ->addOption('username', 'U', InputOption::VALUE_OPTIONAL, 'The username of User used to the import')
             ->addOption('organization', 'O', InputOption::VALUE_OPTIONAL, 'The name of Organization used to the import')
             ->addOption('auto-commit', 'A', InputOption::VALUE_NONE, 'Check if transactional mode or auto commit must be used, dy default')
+            ->addOption('no-stop-on-error', '', InputOption::VALUE_NONE, 'Run all pipelines even if previous pipelines has errors')
         ;
     }
 
@@ -58,6 +59,7 @@ class ImporterRunCommand extends Command
         $username = $input->getOption('username');
         $organization = $input->getOption('organization');
         $autoCommit = $input->getOption('auto-commit');
+        $stopOnError = !$input->getOption('no-stop-on-error');
 
         try {
             $startAt = !empty($startAt) ? new \DateTime($startAt) : null;
@@ -67,16 +69,27 @@ class ImporterRunCommand extends Command
             return 1;
         }
 
-        $results = $this->importerManager->imports($pipelines, new Context($username, $organization, $startAt, $autoCommit));
+        $results = $this->importerManager->imports(
+            $pipelines,
+            new Context($username, $organization, $startAt, $autoCommit),
+            $stopOnError
+        );
 
         foreach ($results->getResults() as $res) {
             $pipeline = $res->getPipelineName();
 
             if ($res->isSkipped()) {
-                $style->note(sprintf(
-                    'Import data from the "%s" pipeline is already being processed',
-                    $pipeline
-                ));
+                if (\count($pipelines) > 1) {
+                    $style->error(sprintf(
+                        'Import data from the "%s" pipeline is skipped because of the previous error',
+                        $pipeline
+                    ));
+                } else {
+                    $style->note(sprintf(
+                        'Import data from the "%s" pipeline is already being processed',
+                        $pipeline
+                    ));
+                }
             } elseif ($res->isSuccess()) {
                 $style->success(sprintf(
                     'Import data from the "%s" pipeline is finished with successfully',
