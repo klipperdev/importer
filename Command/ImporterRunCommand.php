@@ -39,7 +39,7 @@ class ImporterRunCommand extends Command
         $this
             ->setName('importer:run')
             ->setDescription('Import data from a selected pipeline')
-            ->addArgument('pipeline', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'The unique names of pipelines')
+            ->addArgument('pipeline', InputArgument::IS_ARRAY, 'The unique names of pipelines')
             ->addOption('start-at', 'S', InputOption::VALUE_OPTIONAL, 'The ISO datetime')
             ->addOption('username', 'U', InputOption::VALUE_OPTIONAL, 'The username of User used to the import')
             ->addOption('organization', 'O', InputOption::VALUE_OPTIONAL, 'The name of Organization used to the import')
@@ -54,7 +54,7 @@ class ImporterRunCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $style = new SymfonyStyle($input, $output);
-        $pipelines = $input->getArgument('pipeline');
+        $pipelines = (array) $input->getArgument('pipeline');
         $startAt = $input->getOption('start-at');
         $username = $input->getOption('username');
         $organization = $input->getOption('organization');
@@ -67,6 +67,10 @@ class ImporterRunCommand extends Command
             $style->error('The "start-at" option value is not a valid datetime');
 
             return 1;
+        }
+
+        if (empty($pipelines)) {
+            $pipelines = array_keys($this->importerManager->getPipelines());
         }
 
         $results = $this->importerManager->imports(

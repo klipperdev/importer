@@ -16,12 +16,14 @@ use Klipper\Component\Importer\Event\PartialImportEvent;
 use Klipper\Component\Importer\Event\PostImportEvent;
 use Klipper\Component\Importer\Event\PreImportEvent;
 use Klipper\Component\Importer\Exception\InvalidArgumentException;
+use Klipper\Component\Importer\Exception\RequiredPipelineException;
 use Klipper\Component\Importer\Pipeline\BatchablePipelineInterface;
 use Klipper\Component\Importer\Pipeline\CleanableLoadedDataPipelineInterface;
 use Klipper\Component\Importer\Pipeline\IncrementablePipelineInterface;
 use Klipper\Component\Importer\Pipeline\LoggablePipelineInterface;
 use Klipper\Component\Importer\Pipeline\PipelineInterface;
 use Klipper\Component\Importer\Pipeline\RequiredOrganizationPipelineInterface;
+use Klipper\Component\Importer\Pipeline\RequiredPipelinesInterface;
 use Klipper\Component\Importer\Pipeline\RequiredUserPipelineInterface;
 use Klipper\Component\Resource\Domain\DomainManagerInterface;
 use Klipper\Component\Resource\ResourceListInterface;
@@ -242,6 +244,8 @@ class ImporterManager implements ImporterManagerInterface
             }
         }
 
+        $validPipelines = $this->orderPipelines($validPipelines);
+
         foreach ($validPipelines as $pipeline) {
             $importContext = clone $context;
 
@@ -361,5 +365,56 @@ class ImporterManager implements ImporterManagerInterface
         }
 
         return $errors;
+    }
+
+    /**
+     * @param PipelineInterface[] $pipelines
+     *
+     * @return PipelineInterface[]
+     */
+    private function orderPipelines(array $pipelines): array
+    {
+        $pipelineNames = array_keys($this->pipelines);
+        $usedPipelineNames = [];
+        $orderedPipelineNames = [];
+        $orderedPipelines = [];
+
+        foreach ($pipelines as $pipeline) {
+            $usedPipelineNames[] = [$pipeline->getName()];
+
+            if ($pipeline instanceof RequiredPipelinesInterface) {
+                $usedPipelineNames[] = $pipeline->getRequiredPipelines();
+            }
+        }
+
+        $usedPipelineNames = array_unique(array_merge(...$usedPipelineNames));
+
+        while (!empty($usedPipelineNames)) {
+            foreach ($usedPipelineNames as $name) {
+                $pipeline = $this->getPipeline($name);
+                $requiredPipelines = $pipeline instanceof RequiredPipelinesInterface
+                    ? $pipeline->getRequiredPipelines()
+                    : [];
+
+                foreach ($requiredPipelines as $requiredPipeline) {
+                    $isOptional = 0 === strpos($requiredPipeline, '?');
+                    $requiredPipeline = ltrim($requiredPipeline, '?');
+
+                    if (!$isOptional && !\in_array($requiredPipeline, $pipelineNames, true)) {
+                        throw new RequiredPipelineException($requiredPipeline);
+                    }
+                }
+
+                if (empty($requiredPipelines) || empty(array_diff($requiredPipelines, $orderedPipelineNames))) {
+                    $orderedPipelineNames[] = $name;
+                    $orderedPipelines[] = $pipeline;
+                    $usedPipelineNames = array_diff($usedPipelineNames, [$name]);
+
+                    break;
+                }
+            }
+        }
+
+        return $orderedPipelines;
     }
 }
