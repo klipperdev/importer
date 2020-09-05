@@ -374,10 +374,7 @@ class ImporterManager implements ImporterManagerInterface
      */
     private function orderPipelines(array $pipelines): array
     {
-        $pipelineNames = array_keys($this->pipelines);
         $usedPipelineNames = [];
-        $orderedPipelineNames = [];
-        $orderedPipelines = [];
 
         foreach ($pipelines as $pipeline) {
             $usedPipelineNames[] = [$pipeline->getName()];
@@ -387,34 +384,54 @@ class ImporterManager implements ImporterManagerInterface
             }
         }
 
-        $usedPipelineNames = array_unique(array_merge(...$usedPipelineNames));
+        $orderedPipelineNames = $this->finPipelineDependencies(array_unique(array_merge(...$usedPipelineNames)));
+        $orderedPipelines = [];
 
-        while (!empty($usedPipelineNames)) {
-            foreach ($usedPipelineNames as $name) {
-                $pipeline = $this->getPipeline($name);
-                $requiredPipelines = $pipeline instanceof RequiredPipelinesInterface
-                    ? $pipeline->getRequiredPipelines()
-                    : [];
-
-                foreach ($requiredPipelines as $requiredPipeline) {
-                    $isOptional = 0 === strpos($requiredPipeline, '?');
-                    $requiredPipeline = ltrim($requiredPipeline, '?');
-
-                    if (!$isOptional && !\in_array($requiredPipeline, $pipelineNames, true)) {
-                        throw new RequiredPipelineException($requiredPipeline);
-                    }
-                }
-
-                if (empty($requiredPipelines) || empty(array_diff($requiredPipelines, $orderedPipelineNames))) {
-                    $orderedPipelineNames[] = $name;
-                    $orderedPipelines[] = $pipeline;
-                    $usedPipelineNames = array_diff($usedPipelineNames, [$name]);
-
-                    break;
-                }
-            }
+        foreach ($orderedPipelineNames as $name) {
+            $orderedPipelines[] = $this->getPipeline($name);
         }
 
         return $orderedPipelines;
+    }
+
+    /**
+     * @param string[] $names
+     *
+     * @return string[]
+     */
+    private function finPipelineDependencies(array $names): array
+    {
+        $pipelineNames = array_keys($this->pipelines);
+        $orderedPipelineNames = [];
+
+        while (!empty($names)) {
+            $name = (string) current($names);
+
+            $pipeline = $this->getPipeline($name);
+            $requiredPipelines = $pipeline instanceof RequiredPipelinesInterface
+                ? $pipeline->getRequiredPipelines()
+                : [];
+
+            foreach ($requiredPipelines as $requiredPipeline) {
+                $isOptional = 0 === strpos($requiredPipeline, '?');
+                $requiredPipeline = ltrim($requiredPipeline, '?');
+
+                if (!$isOptional && !\in_array($requiredPipeline, $pipelineNames, true)) {
+                    throw new RequiredPipelineException($requiredPipeline);
+                }
+            }
+
+            $diff = array_diff($requiredPipelines, $orderedPipelineNames);
+
+            if (empty($diff)) {
+                $orderedPipelineNames[] = $name;
+                $orderedPipelines[] = $pipeline;
+                $names = array_diff($names, [$name]);
+            } else {
+                $names = array_unique(array_merge($diff, $names));
+            }
+        }
+
+        return array_unique($orderedPipelineNames);
     }
 }
