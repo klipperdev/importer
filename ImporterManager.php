@@ -110,6 +110,29 @@ class ImporterManager implements ImporterManagerInterface
         return $this->pipelines;
     }
 
+    public function getStackOfPipelines(array $pipelines): array
+    {
+        $validPipelines = [];
+
+        foreach ($pipelines as $pipeline) {
+            if (!$pipeline instanceof PipelineInterface) {
+                try {
+                    $validPipelines[] = $this->getPipeline($pipeline);
+                } catch (\Throwable $e) {
+                    $this->getLogger()->critical($e->getMessage(), [
+                        'importer_pipelines' => $pipelines,
+                        'importer_pipeline' => $pipeline,
+                        'exception' => $e,
+                    ]);
+                }
+            } else {
+                $validPipelines[] = $pipeline;
+            }
+        }
+
+        return $this->orderPipelines($validPipelines);
+    }
+
     public function import($pipeline, ContextInterface $context): ImportResultInterface
     {
         set_time_limit(0);
@@ -224,27 +247,9 @@ class ImporterManager implements ImporterManagerInterface
 
     public function imports(array $pipelines, ContextInterface $context, bool $stopOnError = true): ImportResultListInterface
     {
-        $validPipelines = [];
+        $validPipelines = $this->getStackOfPipelines($pipelines);
         $results = [];
         $success = true;
-
-        foreach ($pipelines as $pipeline) {
-            if (!$pipeline instanceof PipelineInterface) {
-                try {
-                    $validPipelines[] = $this->getPipeline($pipeline);
-                } catch (\Throwable $e) {
-                    $this->getLogger()->critical($e->getMessage(), [
-                        'importer_pipelines' => $pipelines,
-                        'importer_pipeline' => $pipeline,
-                        'exception' => $e,
-                    ]);
-                }
-            } else {
-                $validPipelines[] = $pipeline;
-            }
-        }
-
-        $validPipelines = $this->orderPipelines($validPipelines);
 
         foreach ($validPipelines as $pipeline) {
             $importContext = clone $context;

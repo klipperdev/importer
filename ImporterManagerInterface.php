@@ -37,6 +37,13 @@ interface ImporterManagerInterface
     public function getPipelines(): array;
 
     /**
+     * @param PipelineInterface[]|string[] $pipelines The pipeline instances or names
+     *
+     * @return PipelineInterface[]
+     */
+    public function getStackOfPipelines(array $pipelines): array;
+
+    /**
      * @param PipelineInterface|string $pipeline The pipeline instance or name
      *
      * @throws InvalidArgumentException When the pipeline does not exist
