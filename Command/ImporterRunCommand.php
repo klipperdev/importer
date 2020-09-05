@@ -85,7 +85,7 @@ class ImporterRunCommand extends Command
                 if ($res->isSkipped()) {
                     if (\count($pipelines) > 1) {
                         $style->error(sprintf(
-                            'Import data from the "%s" pipeline is skipped because of the previous error',
+                            'Import data from the "%s" pipeline is skipped because an required pipeline dependency at least one error',
                             $pipeline
                         ));
                     } else {

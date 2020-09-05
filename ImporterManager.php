@@ -251,6 +251,7 @@ class ImporterManager implements ImporterManagerInterface
     {
         $validPipelines = $this->getStackOfPipelines($pipelines);
         $results = [];
+        $successPipelines = [];
         $success = true;
 
         foreach ($validPipelines as $pipeline) {
@@ -264,11 +265,15 @@ class ImporterManager implements ImporterManagerInterface
                 $preCallback($pipeline, $validPipelines);
             }
 
-            $res = $stopOnError && !$success
+            $res = $stopOnError && !$success && $this->hasDependencyErrors($pipeline, $successPipelines)
                 ? new ImportResult($pipeline->getName(), null)
                 : $this->import($pipeline, $importContext);
             $success = $success && $res->isSuccess();
             $results[] = $res;
+
+            if ($res->isSuccess()) {
+                $successPipelines[] = $pipeline->getName();
+            }
 
             if (null !== $postCallback) {
                 $postCallback($res, $validPipelines);
@@ -448,5 +453,14 @@ class ImporterManager implements ImporterManagerInterface
         }
 
         return array_unique($orderedPipelineNames);
+    }
+
+    private function hasDependencyErrors(PipelineInterface $pipeline, array $successPipelines): bool
+    {
+        if ($pipeline instanceof RequiredPipelinesInterface) {
+            return !empty(array_diff($pipeline->getRequiredPipelines(), $successPipelines));
+        }
+
+        return false;
     }
 }
