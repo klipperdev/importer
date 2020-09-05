@@ -145,6 +145,8 @@ class ImporterManager implements ImporterManagerInterface
         $id = $pipelineName.':'.($startedTime * 10000);
 
         try {
+            $this->domainManager->clear();
+
             if (!$pipeline instanceof PipelineInterface) {
                 $pipeline = $this->getPipeline($pipelineName);
             }
