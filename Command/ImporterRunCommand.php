@@ -13,6 +13,7 @@ namespace Klipper\Component\Importer\Command;
 
 use Klipper\Component\Importer\Context;
 use Klipper\Component\Importer\ImporterManagerInterface;
+use Klipper\Component\Importer\ImportResultInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -76,37 +77,37 @@ class ImporterRunCommand extends Command
         $results = $this->importerManager->imports(
             $pipelines,
             new Context($username, $organization, $startAt, $autoCommit),
-            $stopOnError
-        );
+            $stopOnError,
+            null,
+            static function (ImportResultInterface $res, array $pipelines) use ($style): void {
+                $pipeline = $res->getPipelineName();
 
-        foreach ($results->getResults() as $res) {
-            $pipeline = $res->getPipelineName();
-
-            if ($res->isSkipped()) {
-                if (\count($pipelines) > 1) {
-                    $style->error(sprintf(
-                        'Import data from the "%s" pipeline is skipped because of the previous error',
+                if ($res->isSkipped()) {
+                    if (\count($pipelines) > 1) {
+                        $style->error(sprintf(
+                            'Import data from the "%s" pipeline is skipped because of the previous error',
+                            $pipeline
+                        ));
+                    } else {
+                        $style->note(sprintf(
+                            'Import data from the "%s" pipeline is already being processed',
+                            $pipeline
+                        ));
+                    }
+                } elseif ($res->isSuccess()) {
+                    $style->success(sprintf(
+                        'Import data from the "%s" pipeline is finished with successfully',
                         $pipeline
                     ));
                 } else {
-                    $style->note(sprintf(
-                        'Import data from the "%s" pipeline is already being processed',
-                        $pipeline
+                    $style->error(sprintf(
+                        'Import data from the "%s" pipeline is finished with %s error(s)',
+                        $pipeline,
+                        $res->getCountErrors()
                     ));
                 }
-            } elseif ($res->isSuccess()) {
-                $style->success(sprintf(
-                    'Import data from the "%s" pipeline is finished with successfully',
-                    $pipeline
-                ));
-            } else {
-                $style->error(sprintf(
-                    'Import data from the "%s" pipeline is finished with %s error(s)',
-                    $pipeline,
-                    $res->getCountErrors()
-                ));
             }
-        }
+        );
 
         return $results->isSuccess() ? 0 : 1;
     }

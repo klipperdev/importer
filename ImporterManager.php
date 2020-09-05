@@ -245,7 +245,7 @@ class ImporterManager implements ImporterManagerInterface
         return new ImportResult($pipelineName, $errors);
     }
 
-    public function imports(array $pipelines, ContextInterface $context, bool $stopOnError = true): ImportResultListInterface
+    public function imports(array $pipelines, ContextInterface $context, bool $stopOnError = true, ?callable $preCallback = null, ?callable $postCallback = null): ImportResultListInterface
     {
         $validPipelines = $this->getStackOfPipelines($pipelines);
         $results = [];
@@ -258,11 +258,19 @@ class ImporterManager implements ImporterManagerInterface
                 $importContext->setStartAt(null);
             }
 
+            if (null !== $preCallback) {
+                $preCallback($pipeline, $validPipelines);
+            }
+
             $res = $stopOnError && !$success
                 ? new ImportResult($pipeline->getName(), null)
                 : $this->import($pipeline, $importContext);
             $success = $success && $res->isSuccess();
             $results[] = $res;
+
+            if (null !== $postCallback) {
+                $postCallback($res, $validPipelines);
+            }
         }
 
         return new ImportResultList($results);

@@ -55,5 +55,5 @@ interface ImporterManagerInterface
      *
      * @throws InvalidArgumentException When the pipeline does not exist
      */
-    public function imports(array $pipelines, ContextInterface $context, bool $stopOnError = true): ImportResultListInterface;
+    public function imports(array $pipelines, ContextInterface $context, bool $stopOnError = true, ?callable $preCallback = null, ?callable $postCallback = null): ImportResultListInterface;
 }
