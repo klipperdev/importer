@@ -404,7 +404,7 @@ class ImporterManager implements ImporterManagerInterface
             }
         }
 
-        $orderedPipelineNames = $this->finPipelineDependencies(array_unique(array_merge(...$usedPipelineNames)));
+        $orderedPipelineNames = $this->findPipelineDependencies(array_unique(array_merge(...$usedPipelineNames)));
         $orderedPipelines = [];
 
         foreach ($orderedPipelineNames as $name) {
@@ -419,7 +419,7 @@ class ImporterManager implements ImporterManagerInterface
      *
      * @return string[]
      */
-    private function finPipelineDependencies(array $names): array
+    private function findPipelineDependencies(array $names): array
     {
         $pipelineNames = array_keys($this->pipelines);
         $orderedPipelineNames = [];
