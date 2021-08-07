@@ -152,7 +152,7 @@ class ImporterManager implements ImporterManagerInterface
             }
 
             if ($pipeline instanceof RequiredUserPipelineInterface) {
-                $context->setUsername($pipeline->getUsername());
+                $context->setUserIdentifier($pipeline->getUsername());
             }
 
             if ($pipeline instanceof RequiredOrganizationPipelineInterface) {
