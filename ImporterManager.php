@@ -358,6 +358,7 @@ class ImporterManager implements ImporterManagerInterface
         foreach ($resList->getResources() as $j => $resource) {
             if (!$resource->isValid()) {
                 $resErrors['resources'][$j]['batch_position'] = $j;
+
                 /** @var ConstraintViolation $error */
                 foreach ($resource->getErrors() as $i => $error) {
                     if (null !== $pp = $error->getPropertyPath()) {
