@@ -11,8 +11,6 @@
 
 namespace Klipper\Component\Importer\Exception;
 
-use Throwable;
-
 /**
  * @author François Pluchino <francois.pluchino@klipper.dev>
  */
@@ -20,7 +18,7 @@ class RequiredPipelineException extends RuntimeException
 {
     private string $pipelineName;
 
-    public function __construct(string $pipelineName, int $code = 0, ?Throwable $previous = null)
+    public function __construct(string $pipelineName, int $code = 0, ?\Throwable $previous = null)
     {
         $this->pipelineName = $pipelineName;
 
